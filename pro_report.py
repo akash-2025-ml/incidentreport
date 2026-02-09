@@ -21,8 +21,8 @@ import os
 
 def register_safe_font():
     try:
-        # Use DejaVuSans font from Windows system (supports emoji & unicode)
-        font_path = r"C:\Users\INDIA\Desktop\open_cv\computer_Vision\incidentreport\DejaVuSans.ttf"
+        # Use DejaVuSans font (supports emoji & unicode)
+        font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
         if not os.path.exists(font_path):
             raise FileNotFoundError(f"Font not found at {font_path}")
         pdfmetrics.registerFont(TTFont("DejaVuSans", font_path))
@@ -40,7 +40,7 @@ def pdf_creater(df, formatted_output, pie_data, threat_data, df1):
     # ----------------------------------------------------------------------------
     # PDF SETUP
     # ----------------------------------------------------------------------------
-    pdf_path = r"C:\Users\INDIA\Desktop\open_cv\computer_Vision\incidentreport\executive_summary_with_tabulate.pdf"
+    pdf_path = os.path.join(os.path.dirname(__file__), "executive_summary_with_tabulate.pdf")
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=A4,

@@ -1,6 +1,8 @@
 import json
 import pandas as pd
 from tabulate import tabulate
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for automated plotting
 import matplotlib.pyplot as plt
 
 # from report import pdf_creater
@@ -126,6 +128,7 @@ def data_creation(a, previous_week):
 
     plt.title("Distribution of Emails")
     plt.savefig("piechart.png")
+    plt.close()  # Close the figure to free memory and prevent display
     ################################################################################
     a4 = {
         "link_click": 21,
@@ -194,9 +197,9 @@ def data_creation(a, previous_week):
     for i, v in enumerate(counts):
         plt.text(i, v + 2, str(v), ha="center", fontweight="bold")
 
+    plt.tight_layout()  # Apply layout adjustments BEFORE saving
     plt.savefig("email_threat_actions.png", bbox_inches="tight", dpi=300)
-    plt.tight_layout()
-    plt.show()
+    plt.close()  # Close the figure to free memory and prevent display
 
     ####################################################################################33
 
