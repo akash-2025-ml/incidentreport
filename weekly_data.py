@@ -15,106 +15,53 @@ def Executive_Summary(a1, formatted_output, pie_data, threat_data, df1, a3):
     pdf_creater(df, formatted_output, pie_data, threat_data, df1)
 
 
+def safe_get(value, default=0):
+    """Return value if valid, otherwise return default. Handles None and NaN."""
+    if value is None:
+        return default
+    if isinstance(value, float) and pd.isna(value):
+        return default
+    return value
+
+
 def data_creation(a, previous_week):
     "create a data for pot the pie chart and table"
     a1 = {}
-    a1["Total Email"] = a["summary"]["totalEmailCount"]
-    a1["Employees Protected"] = a["summary"]["totalEmployeeCount"]
-    a1["Avg Processing Time"] = a["summary"]["avgEmailProcessingTime"]
-    a1["Threats Blocked"] = a["summary"]["overallThreatCount"]["malicious"]
+    a1["Total Email"] = safe_get(a["summary"]["totalEmailCount"], 0)
+    a1["Employees Protected"] = safe_get(a["summary"]["totalEmployeeCount"], 0)
+    a1["Avg Processing Time"] = safe_get(a["summary"]["avgEmailProcessingTime"], 0)
+    a1["Threats Blocked"] = safe_get(a["summary"]["overallThreatCount"]["malicious"], 0)
     pie_data = a1["Total Email"]
     threat_data = a["summary"]["overallThreatCount"]["malicious"]
 
-    # week comparison data
+    # week comparison data - helper function for clean calculation
+    def calc_week_comparison(current_val, prev_val):
+        """Calculate [current, previous, % change] with safe division."""
+        current = safe_get(current_val, 0)
+        prev = safe_get(prev_val, 0)
+        if prev == 0:
+            change = (current - prev) * 100 / 1 if current != 0 else 0
+        else:
+            change = (current - prev) * 100 / prev
+        return [current, prev, change]
+
     a3 = {}
-    if previous_week["summary"]["overallThreatCount"]["malicious"] == 0:
-        a3["Maclicius"] = [
-            a["summary"]["overallThreatCount"]["malicious"],
-            previous_week["summary"]["overallThreatCount"]["malicious"],
-            (
-                a["summary"]["overallThreatCount"]["malicious"]
-                - previous_week["summary"]["overallThreatCount"]["malicious"]
-            )
-            * 100
-            / 1,
-        ]
-    else:
-        a3["Maclicius"] = [
-            a["summary"]["overallThreatCount"]["malicious"],
-            previous_week["summary"]["overallThreatCount"]["malicious"],
-            (
-                a["summary"]["overallThreatCount"]["malicious"]
-                - previous_week["summary"]["overallThreatCount"]["malicious"]
-            )
-            * 100
-            / previous_week["summary"]["overallThreatCount"]["malicious"],
-        ]
-    if previous_week["summary"]["overallThreatCount"]["spam"] == 0:
-        a3["spam"] = [
-            a["summary"]["overallThreatCount"]["spam"],
-            previous_week["summary"]["overallThreatCount"]["spam"],
-            (
-                a["summary"]["overallThreatCount"]["spam"]
-                - previous_week["summary"]["overallThreatCount"]["spam"]
-            )
-            * 100
-            / 1,
-        ]
-    else:
-        a3["spam"] = [
-            a["summary"]["overallThreatCount"]["spam"],
-            previous_week["summary"]["overallThreatCount"]["spam"],
-            (
-                a["summary"]["overallThreatCount"]["spam"]
-                - previous_week["summary"]["overallThreatCount"]["spam"]
-            )
-            * 100
-            / previous_week["summary"]["overallThreatCount"]["spam"],
-        ]
-    if previous_week["summary"]["overallThreatCount"]["warning"] == 0:
-        a3["warning"] = [
-            a["summary"]["overallThreatCount"]["warning"],
-            previous_week["summary"]["overallThreatCount"]["warning"],
-            (
-                a["summary"]["overallThreatCount"]["warning"]
-                - previous_week["summary"]["overallThreatCount"]["warning"]
-            )
-            * 100
-            / 1,
-        ]
-    else:
-        a3["warning"] = [
-            a["summary"]["overallThreatCount"]["warning"],
-            previous_week["summary"]["overallThreatCount"]["warning"],
-            (
-                a["summary"]["overallThreatCount"]["warning"]
-                - previous_week["summary"]["overallThreatCount"]["warning"]
-            )
-            * 100
-            / previous_week["summary"]["overallThreatCount"]["warning"],
-        ]
-    if previous_week["summary"]["overallThreatCount"]["safe"] == 0:
-        a3["safe"] = [
-            a["summary"]["overallThreatCount"]["safe"],
-            previous_week["summary"]["overallThreatCount"]["safe"],
-            (
-                a["summary"]["overallThreatCount"]["safe"]
-                - previous_week["summary"]["overallThreatCount"]["safe"]
-            )
-            * 100
-            / 1,
-        ]
-    else:
-        a3["safe"] = [
-            a["summary"]["overallThreatCount"]["safe"],
-            previous_week["summary"]["overallThreatCount"]["safe"],
-            (
-                a["summary"]["overallThreatCount"]["safe"]
-                - previous_week["summary"]["overallThreatCount"]["safe"]
-            )
-            * 100
-            / previous_week["summary"]["overallThreatCount"]["safe"],
-        ]
+    a3["Malicious"] = calc_week_comparison(
+        a["summary"]["overallThreatCount"].get("malicious"),
+        previous_week["summary"]["overallThreatCount"].get("malicious")
+    )
+    a3["spam"] = calc_week_comparison(
+        a["summary"]["overallThreatCount"].get("spam"),
+        previous_week["summary"]["overallThreatCount"].get("spam")
+    )
+    a3["warning"] = calc_week_comparison(
+        a["summary"]["overallThreatCount"].get("warning"),
+        previous_week["summary"]["overallThreatCount"].get("warning")
+    )
+    a3["safe"] = calc_week_comparison(
+        a["summary"]["overallThreatCount"].get("safe"),
+        previous_week["summary"]["overallThreatCount"].get("safe")
+    )
     print("a3 === ", a3)
     ######################################################################################
     a2 = {}
@@ -123,10 +70,21 @@ def data_creation(a, previous_week):
     names = list(a2.keys())
     salaries = list(a2.values())
 
-    plt.figure(figsize=(3.5, 3.5))
-    plt.pie(salaries, labels=names, autopct="%1.1f%%", startangle=140)
+    # Handle NaN, None, or all-zero values for pie chart
+    salaries = [0 if (v is None or (isinstance(v, float) and pd.isna(v))) else v for v in salaries]
 
-    plt.title("Distribution of Emails")
+    plt.figure(figsize=(3.5, 3.5))
+
+    # Only create pie chart if there's valid data (sum > 0)
+    if sum(salaries) > 0:
+        plt.pie(salaries, labels=names, autopct="%1.1f%%", startangle=140)
+        plt.title("Distribution of Emails")
+    else:
+        # Show placeholder when no data
+        plt.text(0.5, 0.5, "No Data Available", ha='center', va='center', fontsize=12)
+        plt.title("Distribution of Emails")
+        plt.axis('off')
+
     plt.savefig("piechart.png")
     plt.close()  # Close the figure to free memory and prevent display
     ################################################################################
@@ -156,8 +114,10 @@ def data_creation(a, previous_week):
     df1 = pd.DataFrame(
         a3, index=["Current Week", "Last Week", "Change"]
     ).T.reset_index()
-    df1["Current Week"] = df1["Current Week"].astype(int)
-    df1["Last Week"] = df1["Last Week"].astype(int)
+    # Fill NaN values with 0 before converting to int
+    df1["Current Week"] = df1["Current Week"].fillna(0).astype(int)
+    df1["Last Week"] = df1["Last Week"].fillna(0).astype(int)
+    df1["Change"] = df1["Change"].fillna(0)
     df1 = df1.rename(columns={"index": "Category"})
 
     # Add arrows based on sign
