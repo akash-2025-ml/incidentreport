@@ -93,10 +93,19 @@ def data_creation(a, previous_week):
         plt.pie(salaries, labels=names, autopct="%1.1f%%", startangle=140)
         plt.title("Distribution of Emails")
     else:
-        # Show placeholder when no data
-        plt.text(0.5, 0.5, "No Data Available", ha='center', va='center', fontsize=12)
-        plt.title("Distribution of Emails")
+        # Show actual counts when all values are 0
         plt.axis('off')
+        plt.title("Distribution of Emails", fontsize=12, fontweight='bold', pad=20)
+
+        # Build text showing each category with its count
+        count_text = "Email Counts:\n\n"
+        for name, value in zip(names, salaries):
+            count_text += f"{name.capitalize()}: {value}\n"
+        count_text += f"\nTotal: {sum(salaries)}"
+
+        plt.text(0.5, 0.5, count_text, ha='center', va='center', fontsize=11,
+                 transform=plt.gca().transAxes,
+                 bbox=dict(boxstyle='round,pad=0.5', facecolor='#f0f0f0', edgecolor='#cccccc', alpha=0.9))
 
     plt.savefig("piechart.png")
     plt.close()  # Close the figure to free memory and prevent display
