@@ -67,11 +67,24 @@ def data_creation(a, previous_week):
     a2 = {}
     a2 = a["summary"]["overallThreatCount"]
 
+    print("=" * 50)
+    print("DEBUG: Raw overallThreatCount data:")
+    print(f"  a2 = {a2}")
+    print(f"  a2 type = {type(a2)}")
+
     names = list(a2.keys())
     salaries = list(a2.values())
 
+    print(f"  names = {names}")
+    print(f"  salaries (raw) = {salaries}")
+    print(f"  salaries types = {[type(v) for v in salaries]}")
+
     # Handle NaN, None, or all-zero values for pie chart
     salaries = [0 if (v is None or (isinstance(v, float) and pd.isna(v))) else v for v in salaries]
+
+    print(f"  salaries (cleaned) = {salaries}")
+    print(f"  sum(salaries) = {sum(salaries)}")
+    print("=" * 50)
 
     plt.figure(figsize=(3.5, 3.5))
 
